@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  password     String
+  email        String?
+  birthdate    DateTime
+  type         String   @unique
+  profileImage String?
+
+  // Add the opposite relation field
+  history              History[]
+  DateTimeNotification DateTimeNotification[]
+
+  @@map("users")
+}
+
+model History {
+  id                     Int      @id @default(autoincrement())
+  userID                 Int      @map("user_id")
+  timestamp              DateTime @default(now()) @map("timestamp") @db.Timestamp(6)
+  action                 String
+  description            String?
+  datetimeNotificationID Int // เพิ่ม foreign key
+
+  // Foreign key relationships
+  user                 User                 @relation(fields: [userID], references: [id])
+  datetimeNotification DateTimeNotification @relation(fields: [datetimeNotificationID], references: [id])
+
+  @@map("history")
+}
+
+model DateTimeNotification {
+  id                  Int      @id @default(autoincrement())
+  userID              Int      @map("user_id")
+  NotificationMessage String   @db.VarChar(100)
+  datetime            DateTime @db.Date
+
+  // Add the opposite relation field
+  user User @relation(fields: [userID], references: [id])
+
+  // Relationship with History
+  history History[]
+
+  @@map("datetime_notifications")
+}
